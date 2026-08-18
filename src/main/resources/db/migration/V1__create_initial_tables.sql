@@ -3,7 +3,7 @@
 -- ============================================================
 
 CREATE TABLE usuario (
-    id BIGSERIAL PRIMARY KEY,
+    id CHAR(36) NOT NULL PRIMARY KEY,
 
     nome VARCHAR(150) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -13,7 +13,7 @@ CREATE TABLE usuario (
 
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
 
-    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT chk_usuario_tipo
         CHECK (tipo IN ('ALUNO', 'PROFESSOR'))
@@ -25,12 +25,12 @@ CREATE TABLE usuario (
 -- ============================================================
 
 CREATE TABLE professor_aluno (
-    id BIGSERIAL PRIMARY KEY,
+    id CHAR(36) NOT NULL PRIMARY KEY,
 
-    professor_id BIGINT NOT NULL,
-    aluno_id BIGINT NOT NULL,
+    professor_id CHAR(36) NOT NULL,
+    aluno_id CHAR(36) NOT NULL,
 
-    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_professor_aluno_professor
         FOREIGN KEY (professor_id)
@@ -53,14 +53,14 @@ CREATE TABLE professor_aluno (
 -- ============================================================
 
 CREATE TABLE exercicio (
-    id BIGSERIAL PRIMARY KEY,
+    id CHAR(36) NOT NULL PRIMARY KEY,
 
     nome VARCHAR(150) NOT NULL,
     descricao TEXT,
 
     grupo_muscular VARCHAR(100),
 
-    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -71,17 +71,17 @@ CREATE TABLE exercicio (
 -- ============================================================
 
 CREATE TABLE treino (
-    id BIGSERIAL PRIMARY KEY,
+    id CHAR(36) NOT NULL PRIMARY KEY,
 
     nome VARCHAR(150) NOT NULL,
     descricao TEXT,
 
-    aluno_id BIGINT NOT NULL,
-    professor_id BIGINT NOT NULL,
+    aluno_id CHAR(36) NOT NULL,
+    professor_id CHAR(36) NOT NULL,
 
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
 
-    criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_treino_aluno
         FOREIGN KEY (aluno_id)
@@ -99,9 +99,9 @@ CREATE TABLE treino (
 -- ============================================================
 
 CREATE TABLE sessao_treino (
-    id BIGSERIAL PRIMARY KEY,
+    id CHAR(36) NOT NULL PRIMARY KEY,
 
-    treino_id BIGINT NOT NULL,
+    treino_id CHAR(36) NOT NULL,
 
     nome VARCHAR(100) NOT NULL,
     descricao TEXT,
@@ -127,10 +127,10 @@ CREATE TABLE sessao_treino (
 -- ============================================================
 
 CREATE TABLE sessao_exercicio (
-    id BIGSERIAL PRIMARY KEY,
+    id CHAR(36) NOT NULL PRIMARY KEY,
 
-    sessao_treino_id BIGINT NOT NULL,
-    exercicio_id BIGINT NOT NULL,
+    sessao_treino_id CHAR(36) NOT NULL,
+    exercicio_id CHAR(36) NOT NULL,
 
     ordem INTEGER NOT NULL,
 
