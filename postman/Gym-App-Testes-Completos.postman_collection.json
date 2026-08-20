@@ -1,0 +1,175 @@
+{
+  "info": {
+    "name": "Gym App - Testes Completos (Etapas 1 e 2)",
+    "description": "Collection encadeada para testar todos os endpoints disponíveis. Execute as pastas na ordem.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
+    { "key": "professorId", "value": "" },
+    { "key": "alunoId", "value": "" },
+    { "key": "alunoEmail", "value": "" },
+    { "key": "outroAlunoId", "value": "" },
+    { "key": "exercicioId", "value": "" },
+    { "key": "exercicioDescartavelId", "value": "" },
+    { "key": "sessaoId", "value": "" },
+    { "key": "sessaoExercicioId", "value": "" },
+    { "key": "treinoId", "value": "" },
+    { "key": "treinoDescartavelId", "value": "" },
+    { "key": "execucaoId", "value": "" },
+    { "key": "serieId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Usuários e relacionamento",
+      "item": [
+        {
+          "name": "Criar professor",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Professor Completo\",\n  \"email\": \"professor{{$timestamp}}@teste.com\",\n  \"senha\": \"123456\",\n  \"tipo\": \"PROFESSOR\"\n}" }, "url": "{{baseUrl}}/usuarios" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 201', () => pm.expect(pm.response.code).to.equal(201));", "pm.collectionVariables.set('professorId', pm.response.json().id);"] } }]
+        },
+        {
+          "name": "Criar aluno",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Aluno Completo\",\n  \"email\": \"aluno{{$timestamp}}@teste.com\",\n  \"senha\": \"123456\",\n  \"tipo\": \"ALUNO\"\n}" }, "url": "{{baseUrl}}/usuarios" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 201', () => pm.expect(pm.response.code).to.equal(201));", "pm.collectionVariables.set('alunoId', pm.response.json().id);", "pm.collectionVariables.set('alunoEmail', pm.response.json().email);"] } }]
+        },
+        {
+          "name": "Criar segundo aluno (segurança)",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Outro Aluno\",\n  \"email\": \"outro{{$timestamp}}@teste.com\",\n  \"senha\": \"123456\",\n  \"tipo\": \"ALUNO\"\n}" }, "url": "{{baseUrl}}/usuarios" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 201', () => pm.expect(pm.response.code).to.equal(201));", "pm.collectionVariables.set('outroAlunoId', pm.response.json().id);"] } }]
+        },
+        {
+          "name": "Listar usuários",
+          "request": { "method": "GET", "url": "{{baseUrl}}/usuarios" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));", "pm.test('Retorna lista', () => pm.expect(pm.response.json()).to.be.an('array'));"] } }]
+        },
+        {
+          "name": "Buscar aluno",
+          "request": { "method": "GET", "url": "{{baseUrl}}/usuarios/{{alunoId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));", "pm.test('ID correto', () => pm.expect(pm.response.json().id).to.equal(pm.collectionVariables.get('alunoId')));"] } }]
+        },
+        {
+          "name": "Impedir e-mail duplicado",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Duplicado\",\n  \"email\": \"{{alunoEmail}}\",\n  \"senha\": \"123456\",\n  \"tipo\": \"ALUNO\"\n}" }, "url": "{{baseUrl}}/usuarios" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('E-mail duplicado bloqueado', () => pm.expect(pm.response.code).to.equal(422));"] } }]
+        },
+        {
+          "name": "Vincular professor ao aluno",
+          "request": { "method": "POST", "url": "{{baseUrl}}/professores/{{professorId}}/alunos/{{alunoId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 201', () => pm.expect(pm.response.code).to.equal(201));"] } }]
+        },
+        {
+          "name": "Listar alunos do professor",
+          "request": { "method": "GET", "url": "{{baseUrl}}/professores/{{professorId}}/alunos" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));", "pm.test('Aluno vinculado aparece', () => pm.expect(pm.response.text()).to.include(pm.collectionVariables.get('alunoId')));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "02 - Exercícios",
+      "item": [
+        {
+          "name": "Criar exercício principal",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Supino Completo\",\n  \"descricao\": \"Supino reto com barra\",\n  \"grupoMuscular\": \"Peito\"\n}" }, "url": "{{baseUrl}}/exercicios" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 201', () => pm.expect(pm.response.code).to.equal(201));", "pm.collectionVariables.set('exercicioId', pm.response.json().id);"] } }]
+        },
+        {
+          "name": "Criar exercício descartável",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Exercício para remover\",\n  \"descricao\": \"Será removido ao final\",\n  \"grupoMuscular\": \"Teste\"\n}" }, "url": "{{baseUrl}}/exercicios" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 201', () => pm.expect(pm.response.code).to.equal(201));", "pm.collectionVariables.set('exercicioDescartavelId', pm.response.json().id);"] } }]
+        },
+        { "name": "Listar exercícios", "request": { "method": "GET", "url": "{{baseUrl}}/exercicios" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"] } }] },
+        { "name": "Buscar exercícios por nome", "request": { "method": "GET", "url": "{{baseUrl}}/exercicios?nome=Supino" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"] } }] },
+        { "name": "Buscar exercício por ID", "request": { "method": "GET", "url": "{{baseUrl}}/exercicios/{{exercicioId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"] } }] },
+        {
+          "name": "Atualizar exercício",
+          "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Supino Completo Atualizado\",\n  \"descricao\": \"Descrição atualizada\",\n  \"grupoMuscular\": \"Peito\"\n}" }, "url": "{{baseUrl}}/exercicios/{{exercicioId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"] } }]
+        },
+        {
+          "name": "Remover exercício descartável",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/exercicios/{{exercicioDescartavelId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 204', () => pm.expect(pm.response.code).to.equal(204));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "03 - Treinos",
+      "item": [
+        {
+          "name": "Criar treino principal",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Professor-Id", "value": "{{professorId}}" }], "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Treino A Completo\",\n  \"descricao\": \"Treino principal de teste\",\n  \"sessoes\": [\n    {\n      \"nome\": \"Treino A\",\n      \"descricao\": \"Peito e tríceps\",\n      \"ordem\": 1,\n      \"exercicios\": [\n        {\n          \"exercicioId\": \"{{exercicioId}}\",\n          \"ordem\": 1,\n          \"series\": 3,\n          \"repeticoes\": \"8-12\",\n          \"cargaSugerida\": 60.0,\n          \"descansoSegundos\": 90,\n          \"observacao\": \"Controle o movimento\"\n        }\n      ]\n    }\n  ]\n}" }, "url": "{{baseUrl}}/treinos/alunos/{{alunoId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 201', () => pm.expect(pm.response.code).to.equal(201));", "const b=pm.response.json(); pm.collectionVariables.set('treinoId', b.id); pm.collectionVariables.set('sessaoId', b.sessoes[0].id); pm.collectionVariables.set('sessaoExercicioId', b.sessoes[0].exercicios[0].id);"] } }]
+        },
+        {
+          "name": "Criar treino descartável",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Professor-Id", "value": "{{professorId}}" }], "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Treino para remover\",\n  \"descricao\": \"Treino descartável\",\n  \"sessoes\": [\n    {\n      \"nome\": \"Sessão descartável\",\n      \"descricao\": null,\n      \"ordem\": 1,\n      \"exercicios\": [\n        {\n          \"exercicioId\": \"{{exercicioId}}\",\n          \"ordem\": 1,\n          \"series\": 1,\n          \"repeticoes\": \"10\",\n          \"cargaSugerida\": 10,\n          \"descansoSegundos\": 30,\n          \"observacao\": null\n        }\n      ]\n    }\n  ]\n}" }, "url": "{{baseUrl}}/treinos/alunos/{{alunoId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 201', () => pm.expect(pm.response.code).to.equal(201));", "pm.collectionVariables.set('treinoDescartavelId', pm.response.json().id);"] } }]
+        },
+        { "name": "Buscar treino por ID", "request": { "method": "GET", "url": "{{baseUrl}}/treinos/{{treinoId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"] } }] },
+        { "name": "Listar treinos do aluno", "request": { "method": "GET", "url": "{{baseUrl}}/treinos/alunos/{{alunoId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"] } }] },
+        {
+          "name": "Impedir treino sem vínculo",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Professor-Id", "value": "{{professorId}}" }], "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Treino inválido\",\n  \"descricao\": null,\n  \"sessoes\": [\n    {\n      \"nome\": \"Sessão válida\",\n      \"descricao\": null,\n      \"ordem\": 1,\n      \"exercicios\": [\n        {\n          \"exercicioId\": \"{{exercicioId}}\",\n          \"ordem\": 1,\n          \"series\": 1,\n          \"repeticoes\": \"10\",\n          \"cargaSugerida\": 10,\n          \"descansoSegundos\": 30,\n          \"observacao\": null\n        }\n      ]\n    }\n  ]\n}" }, "url": "{{baseUrl}}/treinos/alunos/{{outroAlunoId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Treino inválido bloqueado', () => pm.expect(pm.response.code).to.be.oneOf([400, 422]));"] } }]
+        },
+        { "name": "Remover treino descartável", "request": { "method": "DELETE", "url": "{{baseUrl}}/treinos/{{treinoDescartavelId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 204', () => pm.expect(pm.response.code).to.equal(204));"] } }] }
+      ]
+    },
+    {
+      "name": "04 - Execução do treino",
+      "item": [
+        {
+          "name": "Iniciar execução",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "body": { "mode": "raw", "raw": "{\n  \"sessaoTreinoId\": \"{{sessaoId}}\"\n}" }, "url": "{{baseUrl}}/execucoes-treino" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 201', () => pm.expect(pm.response.code).to.equal(201));", "pm.collectionVariables.set('execucaoId', pm.response.json().id);"] } }]
+        },
+        {
+          "name": "Iniciar novamente não duplica execução",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "body": { "mode": "raw", "raw": "{\n  \"sessaoTreinoId\": \"{{sessaoId}}\"\n}" }, "url": "{{baseUrl}}/execucoes-treino" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Execução existente reutilizada', () => pm.expect(pm.response.json().id).to.equal(pm.collectionVariables.get('execucaoId')));"] } }]
+        },
+        {
+          "name": "Registrar série 1",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "body": { "mode": "raw", "raw": "{\n  \"sessaoExercicioId\": \"{{sessaoExercicioId}}\",\n  \"serie\": 1,\n  \"repeticoesRealizadas\": 12,\n  \"cargaUtilizada\": 60.0,\n  \"concluida\": true\n}" }, "url": "{{baseUrl}}/execucoes-treino/{{execucaoId}}/series" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 201', () => pm.expect(pm.response.code).to.equal(201));", "const b=pm.response.json(); pm.collectionVariables.set('serieId', b.series[b.series.length-1].id);"] } }]
+        },
+        {
+          "name": "Registrar série 2",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "body": { "mode": "raw", "raw": "{\n  \"sessaoExercicioId\": \"{{sessaoExercicioId}}\",\n  \"serie\": 2,\n  \"repeticoesRealizadas\": 10,\n  \"cargaUtilizada\": 60.0,\n  \"concluida\": true\n}" }, "url": "{{baseUrl}}/execucoes-treino/{{execucaoId}}/series" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 201', () => pm.expect(pm.response.code).to.equal(201));"] } }]
+        },
+        {
+          "name": "Impedir série duplicada",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "body": { "mode": "raw", "raw": "{\n  \"sessaoExercicioId\": \"{{sessaoExercicioId}}\",\n  \"serie\": 1,\n  \"repeticoesRealizadas\": 10,\n  \"cargaUtilizada\": 50.0,\n  \"concluida\": true\n}" }, "url": "{{baseUrl}}/execucoes-treino/{{execucaoId}}/series" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Duplicidade bloqueada', () => pm.expect(pm.response.code).to.equal(422));"] } }]
+        },
+        {
+          "name": "Impedir carga negativa",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "body": { "mode": "raw", "raw": "{\n  \"sessaoExercicioId\": \"{{sessaoExercicioId}}\",\n  \"serie\": 3,\n  \"repeticoesRealizadas\": 10,\n  \"cargaUtilizada\": -5,\n  \"concluida\": true\n}" }, "url": "{{baseUrl}}/execucoes-treino/{{execucaoId}}/series" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Carga negativa bloqueada', () => pm.expect(pm.response.code).to.equal(400));"] } }]
+        },
+        {
+          "name": "Atualizar série",
+          "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "body": { "mode": "raw", "raw": "{\n  \"repeticoesRealizadas\": 13,\n  \"cargaUtilizada\": 62.5,\n  \"concluida\": true\n}" }, "url": "{{baseUrl}}/execucoes-treino/{{execucaoId}}/series/{{serieId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"] } }]
+        },
+        { "name": "Consultar execução completa", "request": { "method": "GET", "header": [{ "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "url": "{{baseUrl}}/execucoes-treino/{{execucaoId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));", "pm.test('Séries retornadas', () => pm.expect(pm.response.json().series.length).to.be.greaterThan(0));"] } }] },
+        { "name": "Finalizar execução", "request": { "method": "PUT", "header": [{ "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "url": "{{baseUrl}}/execucoes-treino/{{execucaoId}}/finalizar" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));", "pm.test('Finalizado em preenchido', () => pm.expect(pm.response.json().finalizadoEm).to.not.be.null);"] } }] },
+        { "name": "Impedir finalização repetida", "request": { "method": "PUT", "header": [{ "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "url": "{{baseUrl}}/execucoes-treino/{{execucaoId}}/finalizar" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Finalização repetida bloqueada', () => pm.expect(pm.response.code).to.equal(422));"] } }] },
+        { "name": "Impedir alteração após finalização", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "body": { "mode": "raw", "raw": "{\n  \"repeticoesRealizadas\": 15,\n  \"cargaUtilizada\": 70.0,\n  \"concluida\": true\n}" }, "url": "{{baseUrl}}/execucoes-treino/{{execucaoId}}/series/{{serieId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Alteração bloqueada', () => pm.expect(pm.response.code).to.equal(422));"] } }] }
+      ]
+    },
+    {
+      "name": "05 - Histórico e segurança",
+      "item": [
+        { "name": "Histórico do aluno", "request": { "method": "GET", "header": [{ "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "url": "{{baseUrl}}/execucoes-treino/historico" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));", "pm.test('Retorna lista', () => pm.expect(pm.response.json()).to.be.an('array'));"] } }] },
+        { "name": "Histórico do exercício", "request": { "method": "GET", "header": [{ "key": "X-Aluno-Id", "value": "{{alunoId}}" }], "url": "{{baseUrl}}/exercicios/{{exercicioId}}/historico" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));", "pm.test('Retorna lista', () => pm.expect(pm.response.json()).to.be.an('array'));"] } }] },
+        { "name": "Outro aluno não consulta execução", "request": { "method": "GET", "header": [{ "key": "X-Aluno-Id", "value": "{{outroAlunoId}}" }], "url": "{{baseUrl}}/execucoes-treino/{{execucaoId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Acesso bloqueado', () => pm.expect(pm.response.code).to.equal(422));"] } }] },
+        { "name": "Outro aluno não inicia sessão alheia", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Aluno-Id", "value": "{{outroAlunoId}}" }], "body": { "mode": "raw", "raw": "{\n  \"sessaoTreinoId\": \"{{sessaoId}}\"\n}" }, "url": "{{baseUrl}}/execucoes-treino" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Início bloqueado', () => pm.expect(pm.response.code).to.equal(422));"] } }] },
+        { "name": "Outro aluno não acessa histórico privado", "request": { "method": "GET", "header": [{ "key": "X-Aluno-Id", "value": "{{outroAlunoId}}" }], "url": "{{baseUrl}}/execucoes-treino/historico" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Histórico isolado', () => pm.expect(pm.response.code).to.equal(200));", "pm.test('Histórico vazio', () => pm.expect(pm.response.json()).to.be.empty);"] } }] },
+        { "name": "Remover vínculo professor-aluno", "request": { "method": "DELETE", "url": "{{baseUrl}}/professores/{{professorId}}/alunos/{{alunoId}}" }, "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status 204', () => pm.expect(pm.response.code).to.equal(204));"] } }] }
+      ]
+    }
+  ]
+}
